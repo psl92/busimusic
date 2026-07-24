@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Posimusic - 步丝丝音乐完整版</title>
+<!-- 图片裁剪依赖 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",system-ui,-apple-system,sans-serif;}
+a {text-decoration: none;color: #003366;}
+button {cursor: pointer;border: none;pointer-events:auto !important;}
+input, textarea, select {padding: 8px 10px;border: 1px solid #b8d8f8;border-radius: 6px;outline: none;}
+input:focus, textarea:focus, select:focus {border-color: #52a8ff;}
+html,body{width:100%;min-height:100vh;overflow-x:hidden;}
+/* 全局背景图 */
+.bg-layer{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background: linear-gradient(rgba(135, 206, 235, 0.55), rgba(224, 248, 255, 0.55)), url("https://picsum.photos/id/1036/1920/1080");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+/* 花瓣飘落动画 */
+#petalWrap{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;z-index:0;pointer-events:none;}
+.petal-item{position:absolute;top:-50px;background:#ffd0dd;border-radius:50% 0 50% 50%;opacity:0.8;animation:petalFall linear infinite;}
+@keyframes petalFall {
+    0%{transform:translateY(0) rotate(0deg);opacity:0;}
+    10%{opacity:1;}
+    90%{opacity:1;}
+    100%{transform:translateY(100vh) rotate(720deg);opacity:0;}
+}
+/* 顶部导航栏 */
+nav{display:flex;justify-content:space-between;align-items:center;padding:14px 26px;background:rgba(255,255,255,0.6);backdrop-filter:blur(6px);gap:20px;position:sticky;top:0;z-index:99;}
+.nav-left{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.log-text{font-size:26px;font-weight:bold;color:#222;margin-right:16px;}
+/* 按钮通用样式 */
+.btn-blue{padding:7px 14px;border-radius:8px;background:#52a8ff;color:#fff;transition:0.2s all;}
+.btn-blue:hover{background:#3491e7;transform:translateY(-2px);}
+.btn-blue:active{transform:translateY(0);scale:0.97;}
+.btn-green{padding:7px 14px;border-radius:8px;background:#2da44e;color:#fff;transition:0.2s all;}
+.btn-green:hover{background:#248a3f;transform:translateY(-2px);}
+.btn-orange{padding:7px 14px;border-radius:8px;background:#f79009;color:#fff;transition:0.2s all;}
+.btn-orange:hover{background:#dd7f00;transform:translateY(-2px);}
+.btn-red{padding:7px 14px;border-radius:8px;background:#dd4444;color:#fff;transition:0.2s all;}
+.btn-red:hover{background:#c73333;transform:translateY(-2px);}
+.admin-btn-group{display:none;gap:12px;flex-wrap:wrap;}
+.admin-btn-group.show{display:flex;}
+/* 页面容器 */
+.page-wrap{max-width:1200px;margin:0 auto;padding:24px;}
+.page-container{display:none;}
+.page-container.active{display:block;}
+.title-h2{margin:20px 0;font-size:24px;}
+/* 音视频卡片布局 */
+.card-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;}
+.music-card{background:rgba(255,255,255,0.55);border-radius:10;overflow:hidden;cursor:pointer;transition:0.2s ease;}
+.music-card:hover{transform:translateY(-4px);box-shadow:0 6px 16px rgba(0,80,150,0.15);}
+.card-cover{width:100%;height:110px;object-fit:cover;}
+.card-info{padding:10px;}
+.card-title{font-weight:bold;font-size:15px;}
+.card-author{font-size:13px;color:#444;margin-top:4px;}
+.card-stat{font-size:12px;color:#666;margin-top:6px;}
+/* 排行榜条目 */
+.rank-item{display:flex;align-items:center;background:rgba(255,255,0.5);margin-bottom:10px;padding:16px;border-radius:9px;cursor:pointer;gap:12px;transition:0.2s;}
+.rank-item:hover{background:rgba(255,255,0.7);transform:translateX(4px);}
+.rank-num{width:36px;font-size:20px;font-weight:bold;text-align:center;line-height:36px;}
+/* 表单、表格通用 */
+.form-item{margin:16px 0;}
+label{display:block;margin-bottom:6px;font-weight:500;}
+table{width:100%;background:#fff;border-collapse:collapse;border-radius:8;overflow:hidden;margin:16px 0;}
+th,td{border:1px solid #eee;padding:10px;text-align:left;font-size:14px;}
+th{background:#f7f8fa;}
+/* Toast提示 */
+.toast{position:fixed;top:130px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.78);color:#fff;padding:12px 26px;border-radius:9px;z-index:99999;display:none;font-size:15px;}
+/* 遮罩修复 */
+.mask{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+    background:rgba(0,0,0,0.15);
+}
+.mask.show{display:flex;}
+.modal-box{
+    position: absolute;
+    background:#fff;
+    border-radius:14px;
+    min-width:320px;
+    min-height:300px;
+    overflow:hidden;
+    padding: 8px;
+}
+/* 四角拉伸 */
+.resize-corner{
+    position:absolute;
+    width:16px;
+    height:16px;
+    z-index:10;
+}
+.corner-tl{top:0;left:0;cursor:nw-resize;}
+.corner-tr{top:0;right:0;cursor:ne-resize;}
+.corner-bl{bottom:0;left:0;cursor:sw-resize;}
+.corner-br{bottom:0;right:0;cursor:se-resize;}
+.modal-header{
+    padding:12px 16px;
+    background:rgba(0,0,0,0.08);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:move;
+    user-select:none;
+}
+.modal-close{
+    border:0;
+    background:transparent;
+    font-size:22px;
+    cursor:pointer;
+}
+.modal-inner{
+    width:100%;
+    height:calc(100% - 16px);
+    overflow:auto;
+}
+/* 歌词容器限制高度 */
+.lyric-wrap{
+    flex:1;height:300px;overflow-y:auto;text-align:center;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;
+    border:2px dashed transparent;
+}
+.lyric-wrap.drag-over{border-color:#ffe390;}
+.lyric-line{margin:4px 0;opacity:0.55;cursor:pointer;font-size:15px;transition:0.2s;}
+.lyric-line:hover{opacity:0.85;}
+.lyric-line.active{opacity:1;font-size:17px;color:#ffe390;text-shadow:0 0 10px #ffe390;}
+/* 音频播放器 */
+#audioBox{background:#a2aabd;color:#fff;padding:0;display:flex;flex-direction:column;}
+.audio-modal-body{display:flex;gap:22px;padding:24px;flex:1;}
+.audio-disc-left{flex-shrink:0;width:260px;display:flex;flex-direction:column;align-items:center;}
+.disc-wrap{width:220px;height:220px;border-radius:50%;background:#886e6e;display:flex;align-items:center;justify-content:center;animation:rotateDisc 14s linear infinite;animation-play-state:paused;}
+.disc-wrap.playing{animation-play-state:running;}
+@keyframes rotateDisc {from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.vinyl{width:190px;height:190px;border-radius:50%;background:#b69090;display:flex;align-items:center;justify-content:center;}
+.disc-center{width:80px;height:80px;border-radius:50%;overflow:hidden;}
+.disc-center img{width:100%;height:100%;object-fit:cover;}
+.audio-name{margin-top:14px;font-size:17px;font-weight:bold;text-align:center;}
+.audio-author{font-size:13px;opacity:0.7;margin-top:4px;}
+.audio-lyric-right{flex:1;display:flex;flex-direction:column;min-height:0;}
+.audio-bottom{padding:18px 24px 24px;border-top:1px solid rgba(255,255,255,0.08);}
+.audio-progress{width:100%;height:6px;background:#333;border-radius:3px;margin:12px 0;cursor:pointer;}
+.a-bar{height:100%;background:#ffe390;width:0%;border-radius:3px;}
+.audio-time{text-align:center;font-size:12px;opacity:0.7;margin-bottom:12px;}
+.audio-ctrl{display:flex;justify-content:center;gap:12px;margin-bottom:12px;}
+.audio-ctrl button{width:46px;height:46px;border-radius:50%;background:rgb(172, 172, 151);color:#fff;font-size:18px;border:none;}
+.vol-row{display:flex;justify-content:center;gap:10px;align-items:center;font-size:14;opacity:0.8;}
+/* 视频弹窗 */
+#videoBox{background:#1adbab;padding:20px;color:#286842;min-height:420px;}
+.video-container{width:100%;border-radius:8px;overflow:hidden;}
+.video-container video{width:100%;display:block;}
+.video-progress{width:100%;height:6px;background:#333;border-radius:3px;margin:12px 0;cursor:pointer;}
+.v-bar{height:100%;background:#fff;width:0%;border-radius:3px;}
+.video-ctrl{display:flex;gap:14;margin-top:10px;}
+.video-ctrl button{width:44px;height:44px;border-radius:50%;background:rgb(111, 63, 165);color:#539094;font-size:18px;border:none;}
+/* 底部播放栏 */
+.bottom-player{position:fixed;bottom:0;left:0;right:0;height:80px;background:rgba(15,30,60,0.5);backdrop-filter:blur(10px);display:flex;align-items:center;gap:20px;padding:0 30px;z-index:998;}
+.bottom-player button{width:42px;height:42px;border-radius:50%;background:rgb(177, 177, 159);color:#fff;font-size:18px;border:none;}
+.bottom-tip{color:#fff;}
+.upload-file-input{display:none;}
+/* 图片裁剪弹窗样式 */
+#cropMask{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.85);
+    z-index:10000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:16px;
+}
+#cropBox{width:540px;height:440px;background:#000;}
+#cropImg{max-width:100%;max-height:100%;}
+.crop-btn-group{display:flex;gap:12px;}
+</style>
+</head>
+<body>
+<!-- 裁剪弹窗 -->
+<div id="cropMask">
+    <div id="cropBox">
+        <img id="cropImg" />
+    </div>
+    <div class="crop-btn-group">
+        <button class="btn-green" onclick="confirmCrop()">确认裁剪</button>
+        <button class="btn-red" onclick="closeCrop()">取消</button>
+    </div>
+</div>
+<!-- 全局提示 -->
+<div class="toast" id="toastTip"></div>
+<!-- 背景层 -->
+<div class="bg-layer"></div>
+<!-- 花瓣动画 -->
+<div id="petalWrap"></div>
+<!-- 顶部导航 -->
+<nav>
+    <div class="nav-left">
+        <span class="log-text">Posimusic 步丝丝音乐</span>
+        <button class="btn-blue" onclick="showPage('home')">首页</button>
+        <button class="btn-blue" onclick="showPage('songlib')">歌曲库</button>
+        <button class="btn-blue" onclick="showPage('videolib')">视频库</button>
+        <button class="btn-blue" onclick="showPage('rank')">排行榜</button>
+        <button class="btn-blue" onclick="showPage('local')">本地文件</button>
+        <button class="btn-blue" onclick="showPage('user')">个人中心</button>
+        <div class="admin-btn-group" id="adminBtnGroup">
+            <button class="btn-orange" onclick="showPage('admin-dash')">数据总览</button>
+            <button class="btn-orange" onclick="showPage('admin-media')">作品管理</button>
+            <button class="btn-orange" onclick="showPage('admin-upload')">上传</button>
+            <button class="btn-orange" onclick="showPage('admin-user')">用户管理</button>
+            <button class="btn-orange" onclick="showPage('admin-set')">设置</button>
+        </div>
+        <button class="btn-blue" id="topLoginBtn" onclick="openLoginWrap()">登录</button>
+    </div>
+</nav>
+<main class="page-wrap">
+    <section class="page-container active" data-target="home"><h2 class="title-h2">首页精选</h2><div class="card-wrap" id="homeRecList"></div></section>
+    <section class="page-container" data-target="songlib"><h2 class="title-h2">全部音频</h2><div class="card-wrap" id="songList"></div></section>
+    <section class="page-container" data-target="videolib"><h2 class="title-h2">短视频库</h2><div class="card-wrap" id="videoList"></div></section>
+    <section class="page-container" data-target="rank">
+        <h2 class="title-h2">播放排行榜</h2>
+        <div style="margin-bottom:12px;gap:10px;display:flex;">
+            <button class="btn-blue" onclick="renderRankAudio()">音频榜单</button>
+            <button class="btn-blue" onclick="renderRankVideo()">视频榜单</button>
+            <button class="btn-green" onclick="autoPlayRankList()">自动播放榜单前10</button>
+        </div>
+        <div id="rankWrap"></div>
+    </section>
+    <section class="page-container" data-target="local"><h2 class="title-h2">本地文件</h2>
+    <button class="btn-blue" onclick="document.getElementById('localFile').click()">选择本地音视频</button>
+    <input type="file" id="localFile" multiple accept="audio/*,video/*" class="upload-file-input">
+    <p style="margin-top:10px;color:#333;">支持MP3/MP4/WAV/MOV，选中自动播放</p>
+    <div id="localFileBox"></div></section>
+    <section class="page-container" data-target="user">
+        <h2 class="title-h2">个人中心</h2>
+        <div id="guestTip" style="background:rgba(255,255,0.6);padding:16px;border-radius:10px;">
+            <p>未登录，收藏功能受限</p>
+            <button class="btn-blue" onclick="openLoginWrap()">前往登录</button>
+        </div>
+        <div id="userInfoBox" style="display:none;background:#fff;padding:20px;border-radius:12px;">
+            <p>昵称：<span id="showName"></span></p>
+            <p>账号：<span id="showAccount"></span></p>
+            <p>权限：<span id="showRole"></span></p>
+            <button class="btn-red" onclick="openLogoutCheck()">退出登录</button>
+        </div>
+    </section>
+    <section class="page-container" data-target="login">
+        <h2 class="title-h2">用户登录</h2>
+        <div class="form-item"><label>账号</label><input id="userAcc"></div>
+        <div class="form-item"><label>密码</label><input id="userPwd"></div>
+        <div style="display:flex;gap:12px;">
+            <button onclick="guestLogin()">游客登录</button>
+            <button class="btn-blue" onclick="doLogin()">登录</button>
+            <button class="btn-orange" onclick="openRegisterPage()">注册</button>
+        </div>
+    </section>
+    <section class="page-container" data-target="admin-dash">
+        <h2 class="title-h2">后台数据</h2>
+        <p>音频总数：<span id="audioTotal">0</span></p>
+        <p>视频总数：<span id="allPlay">0</span></p>
+        <p>总播放：<span id="allPlay">0</span></p>
+        <button class="btn-blue" onclick="calcStat()">刷新统计</button>
+    </section>
+    <section class="page-container" data-target="admin-upload">
+        <h2 class="title-h2">上传新作品</h2>
+        <div class="form-item">
+            <label>作品类型</label>
+            <select id="uploadType">
+                <option value="audio">音频</option>
+                <option value="video">视频</option>
+            </select>
+        </div>
+        <div class="form-item">
+            <label>音频文件</label>
+            <button class="btn-blue" onclick="document.getElementById('uploadAudioFile').click()">选择本地音频</button>
+            <input class="upload-file-input" type="file" accept="audio/*" id="uploadAudioFile">
+        </div>
+        <div class="form-item">
+            <label>视频文件</label>
+            <button class="btn-blue" onclick="document.getElementById('uploadVideoFile').click()">选择本地视频</button>
+            <input class="upload-file-input" type="file" accept="video/*" id="uploadVideoFile">
+        </div>
+        <div class="form-item">
+            <label>LRC歌词文件</label>
+            <button class="btn-blue" onclick="document.getElementById('uploadLrcFile').click()">选择本地歌词</button>
+            <input class="upload-file-input" type="file" accept=".lrc,.txt" id="uploadLrcFile">
+        </div>
+        <div class="form-item"><label>作品名称</label><input id="uploadName"></div>
+        <div class="form-item"><label>作者</label><input id="uploadAuthor"></div>
+        <!-- 新增：已选择文件展示行 -->
+        <div class="form-item">
+            <label>已选择文件</label>
+            <div id="selectedFileBox" style="padding:8px 12px;background:rgba(255,255,255,0.6);border-radius:6px;color:#333;">未选择任何文件</div>
+        </div>
+        <div class="form-item"><label>歌词预览</label><textarea id="uploadLrc" rows="5"></textarea></div>
+        <button class="btn-green" onclick="submitUpload()">确认保存上传</button>
+    </section>
+    <section class="page-container" data-target="admin-media">
+        <h2 class="title-h2">作品管理</h2>
+        <div class="tab-switch">
+            <button class="btn-blue" onclick="switchMediaTab('audio')">音频列表</button>
+            <button class="btn-orange" onclick="switchMediaTab('video')">视频列表</button>
+        </div>
+        <table id="audioTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>名称</th>
+                    <th>作者</th>
+                    <th>播放</th>
+                    <th>点赞</th>
+                    <th>收藏</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <table id="videoTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>名称</th>
+                    <th>播放</th>
+                    <th>点赞</th>
+                    <th>收藏</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+    <section class="page-container" data-target="admin-user">
+        <h2 class="title-h2">用户管理</h2>
+        <table><thead><tr><th>ID</th><th>昵称</th><th>账号</th><th>权限</th><th>操作</th></tr></thead>
+        <tbody id="userTable"><tr><td>1</td><td>超级管理员</td><td>admin</td><td>管理员</td><td>内置账号</td></tr></tbody></table>
+    </section>
+    <section class="page-container" data-target="admin-set">
+        <h2 class="title-h2">后台设置</h2>
+        <div class="form-item"><label>修改管理员密码</label><input type="password" id="newAdminPwd"></div>
+        <button class="btn-red" onclick="changeAdminPwd()">确认修改</button>
+    </section>
+</main>
+
+<!-- 登录弹窗 -->
+<div class="mask" id="loginMask" onclick="closeMaskByBg(event)">
+    <div class="modal-box" id="modal-login">
+        <div class="resize-corner corner-tl"></div>
+        <div class="resize-corner corner-tr"></div>
+        <div class="resize-corner corner-bl"></div>
+        <div class="resize-corner corner-br"></div>
+        <div class="modal-inner">
+            <div class="modal-header">
+                <span>账号登录</span>
+                <button class="modal-close" onclick="closeLoginWrap()">×</button>
+            </div>
+            <div class="form-item"><label>账号</label><input id="maskAcc"></div>
+            <div class="form-item"><label>密码</label><input id="maskPwd"></div>
+            <div style="display:flex;gap:12px;margin-top:20px;">
+                <button onclick="maskGuest()">游客登录</button>
+                <button class="btn-blue" onclick="maskLogin()">登录</button>
+                <button class="btn-orange" onclick="switchToReg()">注册</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 注册弹窗 -->
+<div class="mask" id="regMask" onclick="closeMaskByBg(event)">
+    <div class="modal-box" id="modal-reg">
+        <div class="resize-corner corner-tl"></div>
+        <div class="resize-corner corner-tr"></div>
+        <div class="resize-corner corner-bl"></div>
+        <div class="resize-corner corner-br"></div>
+        <div class="modal-inner">
+            <div class="modal-header">
+                <span>注册账号</span>
+                <button class="modal-close" onclick="closeRegWrap()">×</button>
+            </div>
+            <div class="form-item"><label>账号</label><input id="regAcc"></div>
+            <div class="form-item"><label>密码</label><input type="password" id="regPwd"></div>
+            <div class="form-item"><label>确认密码</label><input type="password" id="regPwd2"></div>
+            <div style="display:flex;gap:12px;margin-top:20px;">
+                <button onclick="switchToLogin()">返回</button>
+                <button class="btn-green" onclick="registerNewUser()">完成注册</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 退出弹窗 -->
+<div class="mask" id="logoutMask" onclick="closeMaskByBg(event)">
+    <div class="modal-box" id="modal-logout" style="width:360px;">
+        <div class="resize-corner corner-tl"></div>
+        <div class="resize-corner corner-tr"></div>
+        <div class="resize-corner corner-bl"></div>
+        <div class="resize-corner corner-br"></div>
+        <div class="modal-inner" style="padding:30px;text-align:center;">
+            <div class="modal-header">
+                <span>提示</span>
+                <button class="modal-close" onclick="closeLogoutConfirm()">×</button>
+            </div>
+            <h3>确认退出登录？</h3>
+            <p style="margin:16px 0;">退出后后台功能无法使用</p>
+            <div style="display:flex;gap:16px;justify-content:center;">
+                <button onclick="closeLogoutConfirm()">取消</button>
+                <button class="btn-red" onclick="confirmLogout()">确认退出</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 编辑弹窗 -->
+<div class="mask" id="editMask" onclick="closeMaskByBg(event)">
+    <div class="modal-box" id="modal-edit" style="width:480px;">
+        <div class="resize-corner corner-tl"></div>
+        <div class="resize-corner corner-tr"></div>
+        <div class="resize-corner corner-bl"></div>
+        <div class="resize-corner corner-br"></div>
+        <div class="modal-inner">
+            <div class="modal-header">
+                <span>编辑作品</span>
+                <button class="modal-close" onclick="closeEdit()">×</button>
+            </div>
+            <input type="hidden" id="editId">
+            <div class="form-item">
+                <label>更换封面图片</label>
+                <button class="btn-blue" onclick="document.getElementById('editCoverFile').click()">选择本地图片</button>
+                <input class="upload-file-input" type="file" accept="image/*" id="editCoverFile">
+            </div>
+            <div class="form-item"><label>名称</label><input id="editName"></div>
+            <div class="form-item"><label>作者</label><input id="editAuthor"></div>
+            <div class="form-item"><label>播放次数</label><input type="number" min="0" id="editPlay"></div>
+            <div class="form-item"><label>点赞数</label><input type="number" min="0" id="editLike"></div>
+            <div class="form-item"><label>收藏数</label><input type="number" min="0" id="editCollect"></div>
+            <div style="display:flex;gap:12px;margin-top:20px;">
+                <button class="btn-blue" onclick="saveEdit()">保存修改</button>
+                <button class="btn-red" onclick="closeEdit()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 音频播放器弹窗 -->
+<div class="mask" id="audioMask" onclick="closeMaskByBg(event)">
+    <div class="modal-box" id="modal-audio" style="width:620px;">
+        <div class="resize-corner corner-tl"></div>
+        <div class="resize-corner corner-tr"></div>
+        <div class="resize-corner corner-bl"></div>
+        <div class="resize-corner corner-br"></div>
+        <div class="modal-inner" id="audioBox">
+            <div class="modal-header">
+                <span id="audioTitle">暂无歌曲</span>
+                <button class="modal-close" onclick="closeAudioPlayer()">×</button>
+            </div>
+            <div class="audio-modal-body">
+                <div class="audio-disc-left">
+                    <div class="disc-wrap" id="discAnimate">
+                        <div class="vinyl">
+                            <div class="disc-center">
+                                <img id="audioCoverImg" src="" alt="封面">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="audio-name" id="audioName">未知曲目</div>
+                    <div class="audio-author" id="audioAuthor">-</div>
+                </div>
+                <div class="audio-lyric-right">
+                    <div class="lyric-wrap" id="lyricContainer">暂无歌词，可拖拽lrc文件到此</div>
+                </div>
+            </div>
+            <div class="audio-bottom">
+                <div class="audio-progress" id="audioProgressBarWrap">
+                    <div class="a-bar" id="audioProgressInner"></div>
+                </div>
+                <div class="audio-time" id="audioTimeText">00:00 / 00:00</div>
+                <div class="audio-ctrl">
+                    <button onclick="prevAudioSong()">⏮</button>
+                    <button onclick="audioBack10()">◀</button>
+                    <button onclick="audioPlayToggle()" id="audioPlayBtn">▶</button>
+                    <button onclick="audioForward10()">▶</button>
+                    <button onclick="nextAudioSong()">⏭</button>
+                </div>
+                <div class="vol-row">
+                    <span>音量</span>
+                    <input type="range" min="0" max="100" value="80" id="audioVolumeCtrl">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 视频播放器弹窗 -->
+<div class="mask" id="videoMask" onclick="closeMaskByBg(event)">
+    <div class="modal-box" id="modal-video" style="width:760px;">
+        <div class="resize-corner corner-tl"></div>
+        <div class="resize-corner corner-tr"></div>
+        <div class="resize-corner corner-bl"></div>
+        <div class="resize-corner corner-br"></div>
+        <div class="modal-inner" id="videoBox">
+            <div class="modal-header">
+                <span id="videoTitle">视频播放</span>
+                <button class="modal-close" onclick="closeVideoPlayer()">×</button>
+            </div>
+            <div class="video-container">
+                <video id="videoMainPlayer" preload="metadata"></video>
+            </div>
+            <div class="video-progress" id="videoProgressWrap">
+                <div class="v-bar" id="videoProgressInner"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0 10px;">
+                <div class="video-ctrl">
+                    <button onclick="videoPrevSwitch()">⏮</button>
+                    <button onclick="videoPlaySwitch()" id="videoPlayBtn">▶</button>
+                    <button onclick="videoNextSwitch()">⏭</button>
+                </div>
+                <span id="videoTimeText">00:00 / 00:00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 隐藏文件输入 -->
+<input type="file" id="localFile" accept="audio/*,video/*" multiple class="upload-file-input">
+<input type="file" id="uploadAudioFile" class="upload-file-input" accept="audio/*">
+<input type="file" id="uploadVideoFile" class="upload-file-input" accept="video/*">
+<input type="file" id="uploadLrcFile" class="upload-file-input" accept=".lrc,.txt">
+<input type="file" id="editCoverFile" class="upload-file-input" accept="image/*">
+<!-- 底部播放栏 -->
+<div class="bottom-player">
+    <button onclick="prevAudioSong()">⏮</button>
+    <button onclick="audioPlayToggle()" id="bottomPlayBtn">▶</button>
+    <button onclick="nextAudioSong()">⏭</button>
+    <span class="bottom-tip" id="bottomTipText">暂无播放内容</span>
+</div>
+<audio id="audioMain" preload="metadata">
+
+<script>
+// 裁剪全局变量
+let cropper = null;
+let tempCoverBlob = null;
+// 点击遮罩空白关闭弹窗
+function closeMaskByBg(e){
+    if(e.target === this) this.classList.remove("show");
+}
+// 图片裁剪弹窗关闭
+function closeCrop(){
+    document.getElementById("cropMask").style.display = "none";
+    if(cropper) cropper.destroy();
+    cropper = null;
+}
+// 确认裁剪
+function confirmCrop(){
+    if(!cropper) return;
+    const canvas = cropper.getCroppedCanvas({maxWidth:1200});
+    canvas.toBlob((blob)=>{
+        tempCoverBlob = blob;
+        showToast("封面裁剪完成");
+        closeCrop();
+    }, "image/png");
+}
+// 弹窗拖拽缩放（移除e.stopPropagation，修复全部按钮点击失效）
+const modalList = document.querySelectorAll(".modal-box");
+modalList.forEach(box=>{
+    const header = box.querySelector(".modal-header");
+    const corners = box.querySelectorAll(".resize-corner");
+    let drag = false, resize = false, dragType = "";
+    let startX, startY, boxX, boxY, boxW, boxH;
+    header.onmousedown = e=>{
+        drag = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = box.getBoundingClientRect();
+        boxX = rect.left;
+        boxY = rect.top;
+        document.body.style.cursor = "move";
+    }
+    corners.forEach(cor=>{
+        cor.onmousedown = e=>{
+            resize = true;
+            dragType = cor.className;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = box.getBoundingClientRect();
+            boxX = rect.left; boxY = rect.top;
+            boxW = rect.width; boxH = rect.height;
+        }
+    })
+    document.addEventListener("mousemove",e=>{
+        if(!drag && !resize) return;
+        const dx = e.clientX;
+        const dy = e.clientY;
+        if(drag){
+            box.style.left = boxX + dx - startX + "px";
+            box.style.top = boxY + dy - startY + "px";
+        }
+        if(resize){
+            const dX = dx - startX;
+            const dY = dy - startY;
+            if(dragType.includes("tl")){
+                box.style.left = boxX + dX + "px";
+                box.style.top = boxY + dY + "px";
+                box.style.width = boxW - dX + "px";
+                box.style.height = boxH - dY + "px";
+            }else if(dragType.includes("tr")){
+                box.style.top = boxY + dY + "px";
+                box.style.width = boxW + dX + "px";
+                box.style.height = boxH - dY + "px";
+            }else if(dragType.includes("bl")){
+                box.style.left = boxX + dX + "px";
+                box.style.width = boxW - dX + "px";
+                box.style.height = boxH + dY + "px";
+            }else if(dragType.includes("br")){
+                box.style.width = boxW + dX + "px";
+                box.style.height = boxH + dY + "px";
+            }
+            const w = parseInt(box.style.width);
+            const h = parseInt(box.style.height);
+            if(w < 320) box.style.width = "320px";
+            if(h < 300) box.style.height = "300px";
+        }
+    })
+    document.addEventListener("mouseup",()=>{
+        drag = false; resize = false; dragType = "";
+        document.body.style.cursor = "";
+    })
+})
+
+// 歌词拖拽加载
+const lyricContainer = document.getElementById("lyricContainer");
+lyricContainer.addEventListener("dragover",e=>{
+    e.preventDefault();
+    lyricContainer.classList.add("drag-over");
+})
+lyricContainer.addEventListener("dragleave",()=>lyricContainer.classList.remove("drag-over"));
+lyricContainer.addEventListener("drop",async e=>{
+    e.preventDefault();
+    lyricContainer.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if(!file.name.match(/\.lrc|\.txt$/i)) return showToast("仅支持lrc/txt歌词");
+    const text = await file.text();
+    parseLrcText(text);
+    showToast("歌词加载成功");
+})
+
+// 工具函数
+window.showToast = function(msg, delay=1800){
+    const tip = document.getElementById("toastTip");
+    tip.innerText = msg;
+    tip.style.display = "block";
+    setTimeout(()=>tip.style.display="none", delay);
+}
+window.secToTime = s=>{
+    let m = Math.floor(s/60);
+    let sec = Math.floor(s%60);
+    return String(m).padStart(2)+":"+String(sec).padStart(2);
+}
+function saveLocal(k,d){localStorage.setItem(k,JSON.stringify(d))}
+function getLocal(k){let v=localStorage.getItem(k);return v?JSON.parse(v):null}
+
+// 全局变量
+const ADMIN_ACCOUNT = "admin";
+let ADMIN_PWD = "bu4321";
+let loginUser = getLocal("loginUser") || {login:false,name:"",account:"",role:"guest"};
+let regUserList = getLocal("regUsers") || [];
+let playIndex = 0;
+let lrcLines = [];
+let playMode = 0;
+let autoPlayQueue = [];
+let uploadAudioFileObj = null;
+let uploadVideoFileObj = null;
+let uploadLrcText = "";
+let editCoverBlobUrl = "";
+
+// 媒体数据
+let mediaList = getLocal("mediaData") || [
+    {
+        id:1,name:"夏日晚风",author:"小清",type:"audio",
+        lrc:"[00:01.00]晚风轻轻吹过海边\n[00:05.00]星光落在你侧脸\n[00:08.00]微风带走烦恼\n[00:12.00]月光慢慢浮现\n[00:16.00]想念你的瞬间",
+        cover:"https://picsum.photos/id/202/200",play:1250,like:36,collect:120,src:""
+    },
+    {
+        id:2,name:"城市孤岛",author:"阿泽",type:"audio",
+        lrc:"[00:02.00]深夜走在城市街道\n[00:06.00]循环熟悉旋律\n[00:10.00]孤单路灯照亮我\n[00:14.00]无人陪伴的归途",
+        cover:"https://picsum.photos/id/200/200",play:980,like:22,collect:76,src:""
+    },
+    {
+        id:3,name:"春日短片MV",author:"苏晚",type:"video",
+        cover:"https://picsum.photos/id/203/200",play:660,like:44,collect:92,
+        src:"https://www.w3schools.com/html/mov_bbb.mp4"
+    }
+];
+function saveMediaData(){saveLocal("mediaData",mediaList);}
+
+// DOM缓存
+const audioMain = document.getElementById("audioMain");
+const audioMask = document.getElementById("audioMask");
+const discAnimate = document.getElementById("discAnimate");
+const audioCoverImg = document.getElementById("audioCoverImg");
+const audioTitle = document.getElementById("audioTitle");
+const audioName = document.getElementById("audioName");
+const audioAuthor = document.getElementById("audioAuthor");
+const audioProgressInner = document.getElementById("audioProgressInner");
+const audioTimeText = document.getElementById("audioTimeText");
+const audioPlayBtn = document.getElementById("audioPlayBtn");
+const audioVolumeCtrl = document.getElementById("audioVolumeCtrl");
+const videoMainPlayer = document.getElementById("videoMainPlayer");
+const videoMask = document.getElementById("videoMask");
+const videoProgressInner = document.getElementById("videoProgressInner");
+const videoTimeText = document.getElementById("videoTimeText");
+const videoPlayBtn = document.getElementById("videoPlayBtn");
+const adminBtnGroup = document.getElementById("adminBtnGroup");
+const topLoginBtn = document.getElementById("topLoginBtn");
+
+// 花瓣动画
+function createPetal(){
+    const wrap = document.getElementById("petalWrap");
+    const petal = document.createElement("div");
+    petal.className = "petal-item";
+    const size = 12 + Math.random()*18;
+    petal.style.width = size+"px";
+    petal.style.height = size+"px";
+    petal.style.left = Math.random()*100+"%";
+    petal.style.animationDuration = (5+Math.random()*7)+"s";
+    wrap.appendChild(petal);
+    setTimeout(()=>petal.remove(),13000);
+}
+setInterval(createPetal,320);
+
+// 页面切换
+window.showPage = function(target){
+    document.querySelectorAll(".page-container").forEach(p=>p.classList.remove("active"));
+    const targetPage = document.querySelector(`.page-container[data-target="${target}"]`);
+    if(!targetPage) return showToast("页面不存在");
+    if(target.startsWith("admin") && loginUser.role !== "admin") return showToast("需要管理员权限");
+    targetPage.classList.add("active");
+    renderAll();
+    if(target.startsWith("admin")) calcStat();
+}
+function renderAll(){renderHome();renderSongLib();renderVideoLib();renderRankAll();}
+function renderHome(){
+    const wrap = document.getElementById("homeRecList");
+    wrap.innerHTML = "";
+    mediaList.filter(m=>m.type==="audio").forEach(item=>wrap.innerHTML += createMediaCard(item,mediaList.indexOf(item)));
+}
+function renderSongLib(){
+    const wrap = document.getElementById("songList");
+    wrap.innerHTML = "";
+    mediaList.filter(m=>m.type==="audio").forEach(item=>wrap.innerHTML += createMediaCard(item,mediaList.indexOf(item)));
+}
+function renderVideoLib(){
+    const wrap = document.getElementById("videoList");
+    wrap.innerHTML = "";
+    mediaList.filter(m=>m.type==="video").forEach(item=>wrap.innerHTML += createMediaCard(item,mediaList.indexOf(item)));
+}
+function renderRankAll(){renderRankAudio();}
+function renderRankAudio(){
+    const wrap = document.getElementById("rankWrap");
+    wrap.innerHTML = "";
+    const sorted = [...mediaList].filter(m=>m.type==="audio").sort((a,b)=>b.play - a.play);
+    autoPlayQueue = sorted;
+    sorted.forEach((item,i)=>{
+        const idx = mediaList.indexOf(item);
+        const playFunc = `openAudioPlayer(${idx})`;
+        wrap += `<div class="rank-item" onclick="${playFunc}"><div class="rank-num">${i+1}</div><div><div class="card-title">${item.name}</div><div class="card-author">${item.author} | 播放${item.play}</div></div></div>`;
+    })
+}
+function renderRankVideo(){
+    const wrap = document.getElementById("rankWrap");
+    wrap.innerHTML = "";
+    const sorted = [...mediaList].filter(m=>m.type==="video").sort((a,b)=>b.play);
+    autoPlayQueue = sorted;
+    sorted.forEach((item,i)=>{
+        const idx = mediaList.indexOf(item);
+        const playFunc = `openVideoPlayer(${idx})`;
+        wrap += `<div class="rank-item" onclick="${playFunc}"><div class="rank-num">${i+1}</div><div><div class="card-title">${item.name}</div><div class="card-author">播放${item.play}</div></div></div>`;
+    })
+}
+async function autoPlayRankList(){
+    if(autoPlayQueue.length ===0) return showToast("榜单暂无内容");
+    showToast("开始自动播放榜单");
+    for(let item of autoPlayQueue){
+        const idx = mediaList.indexOf(item);
+        if(item.type === "audio") openAudioPlayer(idx);
+        else openVideoPlayer(idx);
+        await new Promise(res=>{
+            if(item.type === "audio") audioMain.onended = res;
+            else videoMainPlayer.onended = res;
+        })
+    }
+    showToast("榜单播放完毕");
+}
+function createMediaCard(item,idx){
+    const playFn = item.type === "audio" ? `openAudioPlayer(${idx})` : `openVideoPlayer(${idx})`;
+    return `<div class="music-card" onclick="${playFn}">
+        <img class="card-cover" src="${item.cover}">
+        <div class="card-info">
+            <div class="card-title">${item.name}</div>
+            <div class="card-author">${item.author||"无作者"}</div>
+            <div class="card-stat">播放${item.play}</div>
+        </div>
+    </div>`;
+}
+
+// 登录逻辑
+window.openLogoutCheck = function(){
+    if(!loginUser.login){
+        showToast("你尚未登录，无需退出");
+        return;
+    }
+    document.getElementById("logoutMask").classList.add("show");
+}
+window.openLoginWrap = function(){
+    document.getElementById("loginMask").classList.add("show");
+}
+window.closeLoginWrap = ()=>document.getElementById("loginMask").classList.remove("show");
+window.openRegWrap = ()=>{closeLoginWrap();document.getElementById("regMask").classList.add("show");}
+window.closeRegWrap = ()=>document.getElementById("regMask").classList.remove("show");
+window.switchToReg = ()=>openRegWrap();
+window.switchToLogin = ()=>{closeRegWrap();document.getElementById("loginMask").classList.add("show");}
+window.guestLogin = function(){
+    loginUser = {login:true,name:"游客",account:"guest",role:"guest"};
+    saveLocal("loginUser",loginUser);
+    refreshUserPanel();refreshLoginState();closeLoginWrap();showToast("游客登录成功");
+}
+window.maskGuest = guestLogin;
+window.doLogin = function(){
+    const acc = document.getElementById("userAcc").value.trim();
+    const pwd = document.getElementById("userPwd").value.trim();
+    loginByAccount(acc,pwd);
+}
+window.maskLogin = function(){
+    const acc = document.getElementById("maskAcc").value.trim();
+    const pwd = document.getElementById("maskPwd").value.trim();
+    loginByAccount(acc,pwd);
+}
+function loginByAccount(acc,pwd){
+    if(!acc||!pwd) return showToast("账号密码不能为空");
+    if(acc === ADMIN_ACCOUNT && pwd === ADMIN_PWD){
+        loginUser = {login:true,name:"超级管理员",account:acc,role:"admin"};
+    }else{
+        const findUser = regUserList.find(u=>u.acc === acc && u.pwd === pwd);
+        if(!findUser) return showToast("账号或密码错误");
+        loginUser = {login:true,name:findUser.name||acc,account:acc,role:"user"};
+    }
+    saveLocal("loginUser",loginUser);
+    refreshUserPanel();refreshLoginState();closeLoginWrap();showToast("登录成功");
+}
+window.registerNewUser = function(){
+    const acc = document.getElementById("regAcc").value.trim();
+    const pwd = document.getElementById("regPwd").value.trim();
+    const pwd2 = document.getElementById("regPwd2").value.trim();
+    if(!acc||!pwd) return showToast("账号密码不能为空");
+    if(pwd !== pwd2) return showToast("两次密码不一致");
+    if(regUserList.find(u=>u.acc === acc)) return showToast("账号已注册");
+    regUserList.push({acc,pwd,name:acc});
+    saveLocal("regUsers",regUserList);
+    closeRegWrap();showToast("注册完成，请登录");
+}
+window.openLogoutConfirm = ()=>document.getElementById("logoutMask").classList.add("show");
+window.closeLogoutConfirm = ()=>document.getElementById("logoutMask").classList.remove("show");
+window.confirmLogout = function(){
+    loginUser = {login:false,name:"",account:"",role:"guest"};
+    saveLocal("loginUser",loginUser);
+    refreshUserPanel();refreshLoginState();closeLogoutConfirm();showToast("已退出登录");
+}
+function refreshUserPanel(){
+    const guestTip = document.getElementById("guestTip");
+    const userInfoBox = document.getElementById("userInfoBox");
+    if(loginUser.login){
+        guestTip.style.display = "none";userInfoBox.style.display = "block";
+        document.getElementById("showName").innerText = loginUser.name;
+        document.getElementById("showAccount").innerText = loginUser.account;
+        document.getElementById("showRole").innerText = loginUser.role === "admin" ? "系统管理员" : "普通用户";
+        adminBtnGroup.classList.toggle("show", loginUser.role === "admin");
+    }else{
+        guestTip.style.display = "block";userInfoBox.style.display = "none";
+        adminBtnGroup.classList.remove("show");
+    }
+}
+function refreshLoginState(){
+    topLoginBtn.innerText = loginUser.login ? "退出" : "登录";
+}
+
+// 上传文件监听
+document.getElementById("uploadAudioFile").onchange = async e=>{
+    uploadAudioFileObj = e.target.files[0];
+    document.getElementById("selectedFileBox").innerText = "音频：" + uploadAudioFileObj.name;
+    showToast("已选择音频："+uploadAudioFileObj.name);
+    e.target.value = "";
+}
+document.getElementById("uploadVideoFile").onchange = async e=>{
+    uploadVideoFileObj = e.target.files[0];
+    document.getElementById("selectedFileBox").innerText = "视频：" + uploadVideoFileObj.name;
+    showToast("已选择视频："+uploadVideoFileObj.name);
+    e.target.value = "";
+}
+document.getElementById("uploadLrcFile").onchange = async e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    const text = await f.text();
+    uploadLrcText = text;
+    document.getElementById("uploadLrc").value = text;
+    showToast("歌词读取完成");
+    e.target.value = "";
+}
+window.submitUpload = function(){
+    if(loginUser.role !== "admin") return showToast("仅管理员可上传");
+    const n = document.getElementById("uploadName").value.trim();
+    const a = document.getElementById("uploadAuthor").value.trim();
+    const type = document.getElementById("uploadType").value;
+    const lrcText = document.getElementById("uploadLrc").value;
+    if(!n||!a) return showToast("名称、作者不能为空");
+    const newId = mediaList.length ? mediaList.at(-1).id + 1 : 1;
+    let srcUrl = "";
+    if(type === "audio" && uploadAudioFileObj) srcUrl = URL.createObjectURL(uploadAudioFileObj);
+    if(type === "video" && uploadVideoFileObj) srcUrl = URL.createObjectURL(uploadVideoFileObj);
+    mediaList.push({
+        id:newId,name:n,author:a,type:type,
+        lrc:lrcText,
+        cover:"https://picsum.photos/id/100",
+        play:0,like:0,collect:0,src:srcUrl
+    });
+    saveMediaData();
+    renderAll();
+    calcStat();
+    uploadAudioFileObj=null;uploadVideoFileObj=null;uploadLrcText="";
+    document.getElementById("uploadName").value = "";
+    document.getElementById("uploadAuthor").value = "";
+    document.getElementById("uploadLrc").value = "";
+    document.getElementById("selectedFileBox").innerText = "未选择任何文件";
+    showToast("上传保存成功");
+}
+
+// 作品管理
+window.switchMediaTab = type=>{
+    const aTbl = document.getElementById("audioTable");
+    const vTbl = document.getElementById("videoTable");
+    if(type === "audio"){
+        aTbl.style.display = "table";
+        vTbl.style = "none";
+        renderMediaTable("audio");
+    }else{
+        aTbl.style = "none";
+        vTbl.style = "table";
+        renderMediaTable("video");
+    }
+}
+function renderMediaTable(type){
+    const tbl = type === "audio" ? document.getElementById("audioTable") : document.getElementById("videoTable");
+    const tbody = tbl.querySelector("tbody");
+    tbody.innerHTML = "";
+    mediaList.filter(m=>m.type === type).forEach(item=>{
+        const idx = mediaList.indexOf(item);
+        const playFunc = item.type === "audio" ? `openAudioPlayer(${idx})` : `openVideoPlayer(${idx})`;
+        let html = `<tr>
+            <td>${item.id}</td>
+            <td>${item.name}</td>`;
+        if(type === "audio") html += `<td>${item.author}</td>`;
+        html += `
+            <td>${item.play}</td>
+            <td>${item.like}</td>
+            <td>${item.collect}</td>
+            <td>
+                <button class="btn-blue" onclick="${playFunc}">播放</button>
+                <button class="btn-orange" onclick="openEdit(${item.id})">编辑</button>
+                <button class="btn-red" onclick="deleteMedia(${item.id})">删除</button>
+            </td>
+        </tr>`;
+        tbody.innerHTML += html;
+    })
+}
+window.deleteMedia = function(id){
+    if(!confirm("确定永久删除？")) return;
+    mediaList = mediaList.filter(m=>m.id !== id);
+    saveMediaData();
+    renderAll();
+    calcStat();
+    switchMediaTab("audio");
+    showToast("删除成功");
+}
+// 封面裁剪监听
+document.getElementById("editCoverFile").onchange = async e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = res=>{
+        const imgDom = document.getElementById("cropImg");
+        imgDom.src = res.target.result;
+        document.getElementById("cropMask").style.display = "flex";
+        if(cropper) cropper.destroy();
+        cropper = new Cropper(imgDom, {
+            aspectRatio: 1,
+            viewMode:1,
+            autoCropArea:0.8
+        });
+    }
+    reader.readAsDataURL(file);
+    e.target.value = "";
+}
+// 打开编辑，自动回填播放/点赞/收藏数值
+window.openEdit = function(id){
+    const item = mediaList.find(m=>m.id === id);
+    document.getElementById("editId").value = id;
+    document.getElementById("editName").value = item.name;
+    document.getElementById("editAuthor").value = item.author;
+    document.getElementById("editPlay").value = item.play;
+    document.getElementById("editLike").value = item.like;
+    document.getElementById("editCollect").value = item.collect;
+    editCoverBlobUrl = "";
+    tempCoverBlob = null;
+    document.getElementById("editMask").classList.add("show");
+}
+window.closeEdit = ()=>document.getElementById("editMask").classList.remove("show");
+window.saveEdit = function(){
+    const id = Number(document.getElementById("editId").value);
+    const target = mediaList.find(m=>m.id === id);
+    target.name = document.getElementById("editName").value.trim();
+    target.author = document.getElementById("editAuthor").value.trim();
+    target.play = Number(document.getElementById("editPlay").value) || 0;
+    target.like = Number(document.getElementById("editLike").value) || 0;
+    target.collect = Number(document.getElementById("editCollect").value) || 0;
+    if(tempCoverBlob){
+        target.cover = URL.createObject(tempCoverBlob);
+    }
+    saveMediaData();
+    closeEdit();
+    renderAll();
+    switchMediaTab("audio");
+    showToast("修改保存完成");
+}
+window.calcStat = function(){
+    const aud = mediaList.filter(m=>m.type==="audio");
+    const vid = mediaList.filter(m=>m.type==="video");
+    const ap = aud.reduce((s,i)=>s+i.play,0);
+    const vp = vid.reduce((s,i)=>s+i.play,0);
+    document.getElementById("audioTotal").innerText = aud.length;
+    document.getElementById("videoTotal").innerText = vid.length;
+    document.getElementById("allPlay").innerText = ap + vp;
+    showToast("统计刷新完成");
+}
+window.changeAdminPwd = function(){
+    const p = document.getElementById("newAdminPwd").value.trim();
+    if(!p) return showToast("输入新密码");
+    ADMIN_PWD = p;
+    document.getElementById("newAdminPwd").value = "";
+    showToast("管理员密码已修改");
+}
+
+// ========== 【核心修复】本地文件选中自动播放逻辑 ==========
+document.getElementById("localFile").onchange = async function(e){
+    const files = e.target.files;
+    if(!files.length) return;
+    const file = files[0];
+    const url = URL.createObjectURL(file);
+    const temp = {
+        id:Date.now(),name:file.name,author:"本地",type:"",
+        lrc:"",cover:"https://picsum.photos/id/100",play:0,like:0,collect:0,src:url
+    };
+    // 判断媒体类型
+    let targetIndex = null;
+    if(file.type.startsWith("audio")){
+        temp.type = "audio";
+        mediaList.push(temp);
+        saveMediaData();
+        renderAll();
+        targetIndex = mediaList.length - 1;
+        // 打开音频播放器弹窗
+        openAudioPlayer(targetIndex);
+        audioMain.oncanplay = async ()=>{
+            try{
+                await audioMain.play();
+                audioPlayBtn.innerText = "⏸";
+                discAnimate.classList.add("playing");
+                // 同步底部播放按钮
+                document.getElementById("bottomPlayBtn").innerText = "⏸";
+            }catch(err){
+                showToast("浏览器限制自动播放，请手动点击播放");
+            }
+        }
+    }else if(file.type.startsWith("video")){
+        temp.type = "video";
+        mediaList.push(temp);
+        saveMediaData();
+        renderAll();
+        targetIndex = mediaList.length - 1;
+        // 修复：传下标targetIndex，不是temp对象
+        openVideoPlayer(targetIndex);
+        videoMainPlayer.oncanplay = async ()=>{
+            try{
+                await videoMainPlayer.play();
+                videoPlayBtn.innerText = "⏸";
+            }catch(err){
+                showToast("浏览器限制自动播放，请手动点击播放");
+            }
+        }
+    }
+    document.getElementById("localFileBox").innerHTML += `<p>✅已加载：${file.name}</p>`;
+    this.value = "";
+}
+// 音频播放器
+window.openAudioPlayer = function(idx){
+    const item = mediaList[idx];
+    if(item.type !== "audio") return showToast("该条目是视频");
+    playIndex = idx;
+    audioCoverImg.src = item.cover;
+    audioTitle.innerText = item.name;
+    audioName.innerText = item.name;
+    audioAuthor.innerText = item.author;
+    resetLyricData();
+    if(item.lrc) parseLrcText(item.lrc);
+    audioMask.classList.add("show");
+    discAnimate.classList.remove("playing");
+    audioMain.pause();
+    audioMain.currentTime = 0;
+    audioMain.src = item.src;
+    audioPlayBtn.innerText = "▶";
+    mediaList[idx].play += 1;
+    saveMediaData();
+    renderRank();
+}
+window.closeAudioPlayer = function(){
+    audioMask.classList.remove("show");
+    discAnimate.classList.remove("playing");
+    audioMain.pause();
+    audioPlayBtn.innerText = "▶";
+}
+window.audioPlayToggle = function(){
+    if(!audioMain.src) return showToast("请选择歌曲");
+    if(audioMain.paused){
+        audioMain.play().then(()=>{
+            audioPlayBtn.innerText = "⏸";
+            discAnimate.classList.add("playing");
+        }).catch(()=>showToast("无法自动播放，请点击播放"));
+    }else{
+        audioMain.pause();
+        audioPlayBtn.innerText = "▶";
+        discAnimate.classList.remove("playing");
+    }
+}
+window.prevAudioSong = function(){
+    const audios = mediaList.filter(m=>m.type==="audio");
+    if(audios.length === 0) return showToast("暂无音频");
+    let pos = audios.findIndex(x=>x.id === mediaList[playIndex]?.id);
+    pos = pos - 1 < 0 ? audios.length - 1 : pos - 1;
+    openAudioPlayer(mediaList.indexOf(audios[pos]));
+}
+window.nextAudioSong = function(){
+    const audios = mediaList.filter(m=>m.type==="audio");
+    if(audios.length === 0) return showToast("暂无音频");
+    let pos = audios.findIndex(x=>x.id === mediaList[playIndex]?.id);
+    pos = pos + 1 >= audios.length ? 0 : pos + 1;
+    openAudioPlayer(mediaList.indexOf(audios[pos]));
+}
+window.audioBack10 = ()=>audioMain.currentTime = Math.max(0, audioMain.currentTime - 10);
+window.audioForward10 = ()=>audioMain.currentTime = Math.min(audioMain.duration||9999, audioMain.currentTime + 10);
+audioVolumeCtrl.oninput = ()=> audioMain.volume = Number(audioVolumeCtrl.value)/100;
+document.getElementById("audioProgressBarWrap").onclick = e=>{
+    if(!audioMain.duration) return;
+    const rect = e.target.getBoundingClientRect();
+    audioMain.currentTime = audioMain.duration * (e.clientX - rect.left)/rect.width;
+}
+audioMain.ontimeupdate = function(){
+    if(!audioMain.duration) return;
+    const pct = (audioMain.currentTime / audioMain.duration)*100;
+    audioProgressInner.style.width = pct + "%";
+    audioTimeText.innerText = secToTime(audioMain.currentTime)+" / "+secToTime(audioMain.duration);
+    updateActiveLyric(audioMain.currentTime);
+}
+audioMain.onended = ()=> nextAudioSong();
+
+// 歌词处理
+function resetLyricData(){
+    lrcLines = [];
+    lyricContainer.innerHTML = "暂无歌词，可拖拽lrc文件到此";
+}
+function parseLrcText(text){
+    lrcLines = [];
+    lyricContainer.innerHTML = "";
+    const reg = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/g;
+    let res;
+    while((res = reg.exec(text)) !== null){
+        const t = Number(res[1])*60 + Number(res[2]) + Number(res[3])/1000;
+        lrcLines.push({time:t,text:res[4]});
+    }
+    lrcLines.sort((a,b)=>a.time - b.time);
+    updateActiveLyric(0);
+}
+function updateActiveLyric(curTime){
+    let curIdx = 0;
+    for(let i=0;i<lrcLines;i++){
+        if(lrcLines[i].time <= curTime) curIdx = i;
+    }
+    const start = Math.max(0, curIdx - 5);
+    const end = Math.min(lrcLines.length - 1, curIdx + 5);
+    lyricContainer.innerHTML = "";
+    for(let i=start;i<=end;i++){
+        const div = document.createElement("div");
+        div.className = "lyric-line";
+        div.innerText = lrcLines[i].text;
+        if(i === curIdx) div.classList.add("active");
+        div.onclick = ()=>{
+            audioMain.currentTime = lrcLines[i].time;
+            if(audioMain.paused){
+                audioMain.play();
+                audioPlayBtn.innerText = "⏸";
+                discAnimate.classList.add("playing");
+            }
+        }
+        lyricContainer.appendChild(div);
+    }
+}
+
+// 视频播放器
+window.openVideoPlayer = function(idx){
+    const item = mediaList[idx];
+    if(item.type !== "video") return showToast("该条目是音频");
+    videoMask.classList.add("show");
+    videoMainPlayer.src = item.src;
+    videoMainPlayer.pause();
+    videoPlayBtn.innerText = "▶";
+    mediaList[idx].play += 1;
+    saveMediaData();
+    renderRank();
+    // 视频加载完成自动播放，捕获浏览器自动播放限制
+    videoMainPlayer.oncanplay = async function(){
+        try {
+            await videoMainPlayer.play();
+            videoPlayBtn.innerText = "⏸";
+        } catch (err) {
+            showToast("浏览器限制自动播放，请手动点击播放");
+        }
+    }
+}
+window.closeVideoPlayer = function(){
+    videoMask.classList.remove("show");
+    videoMainPlayer.pause();
+    videoMainPlayer.src = "";
+    videoMainPlayer.oncanplay = null;
+}
+window.videoPlaySwitch = function(){
+    if(!videoMainPlayer.src) return showToast("请选择视频");
+    if(videoMainPlayer.paused){
+        videoMainPlayer.play().then(()=>{
+            videoPlayBtn.innerText = "⏸";
+        }).catch(()=>showToast("浏览器限制自动播放"));
+    }else{
+        videoMainPlayer.pause();
+        videoPlayBtn.innerText = "▶";
+    }
+}
+window.videoPrevSwitch = ()=>showToast("多视频切换待开发");
+window.videoNextSwitch = ()=>showToast("多视频切换待开发");
+videoMainPlayer.ontimeupdate = function(){
+    if(!videoMainPlayer.duration) return;
+    const pct = (videoMainPlayer.currentTime / videoMainPlayer)*100;
+    videoProgressInner.style.width = pct + "%";
+    videoTimeText.innerText = secToTime(videoMain.currentTime)+" / "+secToTime(videoMain.duration);
+}
+document.getElementById("videoProgressWrap").onclick = e=>{
+    if(!videoMainPlayer.duration) return;
+    const rect = e.target.getBoundingClientRect();
+    videoMainPlayer.currentTime = videoMain.duration * (e.clientX - rect.left)/rect.width;
+}
+videoMainPlayer.onended = function(){
+    videoMainPlayer.currentTime = 0;
+    videoPlayBtn.innerText = "▶";
+}
+
+// 初始化
+window.onload = function (){
+renderAll ();
+calcStat ();
+refreshUserPanel ();
+refreshLoginState ();
+showPage ("home");
+}
+</script>
+</body> 
+</html>
